@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>動物タイプ診断</title>
+</head>
+<body>
+  <h1>動物タイプ診断</h1>
+
+  <p>※同じ画像でも異なる結果になることがあります。</p>
+
+  <label>
+    <input type="checkbox" id="agree">
+    本人の写真をアップロードし、24時間保存に同意します。
+  </label>
+  <br><br>
+
+  <input type="file" id="fileInput" accept="image/*">
+  <br><br>
+
+  <button onclick="showAnimal()">診断する</button>
+
+  <h2 id="result"></h2>
+
+  <script>
+    const animals = [
+      "柴犬タイプ！誠実でまっすぐ！",
+      "猫タイプ！自由でマイペース！",
+      "キツネタイプ！知的でスマート！",
+      "カワウソタイプ！愛嬌たっぷり！",
+      "ライオンタイプ！リーダー気質！"
+    ];
+
+    function showAnimal() {
+      const agree = document.getElementById("agree").checked;
+      if (!agree) {
+        alert("同意してください");
+        return;
+      }
+
+      const random = animals[Math.floor(Math.random() * animals.length)];
+      document.getElementById("result").innerText = random;
+    }
+  </script>
+</body>
+</html>
