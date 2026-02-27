@@ -1,46 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <title>動物タイプ診断</title>
 </head>
 <body>
-  <h1>動物タイプ診断</h1>
 
-  <p>※同じ画像でも異なる結果になることがあります。</p>
+  <h1>あなたはどの動物タイプ？</h1>
 
-  <label>
-    <input type="checkbox" id="agree">
-    本人の写真をアップロードし、24時間保存に同意します。
-  </label>
-  <br><br>
+  <form id="animalForm">
+    <p>
+      <input type="file" accept="image/*" required>
+    </p>
 
-  <input type="file" id="fileInput" accept="image/*">
-  <br><br>
+    <p>
+      <a href="terms.html" target="_blank">利用規約はこちら</a>
+    </p>
 
-  <button onclick="showAnimal()">診断する</button>
+    <p>
+      <label>
+        <input type="checkbox" required>
+        利用規約に同意し、かつ18歳以上であることを確認します
+      </label>
+    </p>
+
+    <p>
+      <button type="submit">診断する</button>
+    </p>
+  </form>
 
   <h2 id="result"></h2>
 
   <script>
     const animals = [
-      "柴犬タイプ！誠実でまっすぐ！",
-      "猫タイプ！自由でマイペース！",
-      "キツネタイプ！知的でスマート！",
-      "カワウソタイプ！愛嬌たっぷり！",
-      "ライオンタイプ！リーダー気質！"
+      "ライオン 🦁",
+      "ねこ 🐱",
+      "いぬ 🐶",
+      "パンダ 🐼",
+      "うさぎ 🐰",
+      "きつね 🦊",
+      "ハリネズミ 🦔",
+      "コアラ 🐨"
     ];
 
-    function showAnimal() {
-      const agree = document.getElementById("agree").checked;
-      if (!agree) {
-        alert("同意してください");
-        return;
-      }
+    document.getElementById("animalForm").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-      const random = animals[Math.floor(Math.random() * animals.length)];
-      document.getElementById("result").innerText = random;
-    }
+      const randomIndex = Math.floor(Math.random() * animals.length);
+      const selectedAnimal = animals[randomIndex];
+
+      document.getElementById("result").textContent =
+        "あなたは… " + selectedAnimal + " タイプです！";
+    });
   </script>
+
 </body>
 </html>
