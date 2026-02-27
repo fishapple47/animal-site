@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>動物タイプ診断</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -10,7 +11,7 @@
 
   <form id="animalForm">
     <p>
-      <input type="file" accept="image/*" required>
+      <input type="file" id="imageInput" accept="image/*" required>
     </p>
 
     <p>
@@ -32,6 +33,13 @@
   <h2 id="result"></h2>
 
   <script>
+
+    // 🔥 ここを書き換える
+    const supabase = window.supabase.createClient(
+      "https://kuxeqdsvpzdtssejkasy.supabase.co",
+      "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
+    );
+
     const animals = [
       "ライオン 🦁",
       "ねこ 🐱",
@@ -43,15 +51,49 @@
       "コアラ 🐨"
     ];
 
-    document.getElementById("animalForm").addEventListener("submit", function(e) {
+    document.getElementById("animalForm").addEventListener("submit", async function(e) {
       e.preventDefault();
 
+      const file = document.getElementById("imageInput").files[0];
+      if (!file) {
+        alert("画像を選んでください");
+        return;
+      }
+
+      const fileName = Date.now() + "_" + file.name;
+
+      // ① Storageにアップロード
+      const { error: uploadError } = await supabase
+        .storage
+        .from("images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        alert("アップロード失敗");
+        return;
+      }
+
+      // ② 公開URL取得
+      const { data } = supabase
+        .storage
+        .from("images")
+        .getPublicUrl(fileName);
+
+      const imageUrl = data.publicUrl;
+
+      // ③ DB保存
+      await supabase
+        .from("uploads")
+        .insert([{ image_url: imageUrl }]);
+
+      // ④ ランダム表示
       const randomIndex = Math.floor(Math.random() * animals.length);
       const selectedAnimal = animals[randomIndex];
 
       document.getElementById("result").textContent =
         "あなたは… " + selectedAnimal + " タイプです！";
     });
+
   </script>
 
 </body>
