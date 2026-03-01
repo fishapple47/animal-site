@@ -1,213 +1,184 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>どうぶつタイプ診断 🐾</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>どうぶつタイプ診断 🐾</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background: linear-gradient(135deg, #ffe6f0, #e6f7ff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-    }
-
-    .card {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 25px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 100%;
-      max-width: 380px;
-      position: relative;
-    }
-
-    h1 {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
-
-    .description {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 20px;
-    }
-
-    input[type="file"] {
-      width: 100%;
-      margin-bottom: 15px;
-    }
-
-    button {
-      background: #ff80bf;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 50px;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-      width: 100%;
-    }
-
-    button:hover {
-      background: #ff4da6;
-      transform: scale(1.05);
-    }
-
-    #preview {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin: 10px auto;
-      display: none;
-      border: 3px solid #ffb3d9;
-    }
-
-    #loading {
-      display: none;
-      margin-top: 15px;
-      font-size: 14px;
-      color: #888;
-    }
-
-    #result {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #444;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: 0.5s;
-    }
-
-    #result.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .tiny-terms {
-      font-size: 6px;
-      color: #ccc;
-      margin-top: 8px;
-      display: block;
-      text-decoration: none;
-    }
-
-    label {
-      font-size: 12px;
-      color: #555;
-    }
-  </style>
+<style>
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+  background:linear-gradient(135deg,#fce3ff,#e0f7ff,#fff0f6);
+  background-size:200% 200%;
+  animation:bgMove 10s ease infinite;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  margin:0;
+  padding:20px;
+}
+@keyframes bgMove{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+.card{
+  background:white;
+  padding:25px;
+  border-radius:25px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.1);
+  width:100%;
+  max-width:900px;
+  text-align:center;
+}
+.results{
+  display:flex;
+  gap:20px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.resultCard{
+  flex:1;
+  min-width:250px;
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+.animalImg{
+  font-size:50px;
+}
+button{
+  background:#ff7ecb;
+  border:none;
+  padding:10px 20px;
+  border-radius:30px;
+  color:white;
+  cursor:pointer;
+  margin-top:10px;
+}
+#compatibility{
+  font-size:22px;
+  margin-top:20px;
+  font-weight:bold;
+}
+.tiny-terms{
+  font-size:6px;
+  color:#ccc;
+}
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <h1>あなたはどのどうぶつ？ 🐶</h1>
-    <div class="description">
-      顔写真を選んで「診断する」を押してね！✨
-    </div>
+<div class="card">
+<h2>どうぶつタイプ診断 🐶</h2>
+<p>顔写真を選んで「診断する」を押してね✨</p>
 
-    <img id="preview">
+<input type="file" id="imageInput" accept="image/*">
+<button onclick="diagnose()">診断する</button>
+<button onclick="addFriend()">もう1人診断する</button>
 
-    <form id="animalForm">
-      <input type="file" id="imageInput" accept="image/*" required>
+<div id="loading"></div>
 
-      <p>
-        <label>
-          <input type="checkbox" required>
-          利用規約に同意する
-        </label>
-      </p>
+<div class="results" id="results"></div>
+<div id="compatibility"></div>
 
-      <button type="submit">診断する ✨</button>
-    </form>
+<button onclick="saveScreenshot()">結果を保存📸</button>
+<button onclick="shareResult()">シェア📤</button>
 
-    <div id="loading">診断中…🐾✨</div>
-    <h2 id="result"></h2>
+<br><a href="terms.html" target="_blank" class="tiny-terms">利用規約はこちら</a>
+</div>
 
-    <a href="terms.html" target="_blank" class="tiny-terms">
-      利用規約はこちら
-    </a>
-  </div>
+<script>
+const animals=[
+{name:"ライオン 🦁",rare:"★★★★★",emoji:"🦁"},
+{name:"ねこ 🐱",rare:"★★★",emoji:"🐱"},
+{name:"いぬ 🐶",rare:"★★★",emoji:"🐶"},
+{name:"パンダ 🐼",rare:"★★★★",emoji:"🐼"},
+{name:"うさぎ 🐰",rare:"★★",emoji:"🐰"},
+{name:"きつね 🦊",rare:"★★★★",emoji:"🦊"},
+{name:"ハリネズミ 🦔",rare:"★★",emoji:"🦔"},
+{name:"コアラ 🐨",rare:"★★★",emoji:"🐨"}
+];
 
-  <script>
-    const client = window.supabase.createClient(
-      "https://kuxeqdsvpzdtssejkasy.supabase.co",
-      "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
-    );
+let results=[];
 
-    const animals = [
-      { name: "ライオン 🦁", comment: "カリスマ性があってリーダータイプ！" },
-      { name: "ねこ 🐱", comment: "マイペースで愛され上手♡" },
-      { name: "いぬ 🐶", comment: "素直でみんなの癒し存在！" },
-      { name: "パンダ 🐼", comment: "ゆるかわで周りを和ませる天才！" },
-      { name: "うさぎ 🐰", comment: "やさしくて守りたくなる魅力！" },
-      { name: "きつね 🦊", comment: "ちょっとミステリアスで賢い！" },
-      { name: "ハリネズミ 🦔", comment: "ツンデレだけど実は優しい♡" },
-      { name: "コアラ 🐨", comment: "穏やかで安心感バツグン！" }
-    ];
+function hashCode(str){
+  let hash=0;
+  for(let i=0;i<str.length;i++){
+    hash=str.charCodeAt(i)+((hash<<5)-hash);
+  }
+  return Math.abs(hash);
+}
 
-    const preview = document.getElementById("preview");
-    const imageInput = document.getElementById("imageInput");
+function diagnose(){
+  const file=document.getElementById("imageInput").files[0];
+  if(!file){alert("画像を選んでね");return;}
 
-    imageInput.addEventListener("change", function() {
-      const file = this.files[0];
-      if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
-      }
+  document.getElementById("loading").innerText="診断中…🐾";
+
+  let key=file.name+file.size;
+  let index=hashCode(key)%animals.length;
+  let animal=animals[index];
+
+  setTimeout(()=>{
+    document.getElementById("loading").innerText="";
+    addResult(animal);
+  },1500);
+}
+
+function addResult(animal){
+  results.push(animal);
+  const container=document.getElementById("results");
+
+  const div=document.createElement("div");
+  div.className="resultCard";
+  div.innerHTML=`
+    <div class="animalImg">${animal.emoji}</div>
+    <h3>${animal.name}</h3>
+    <p>レア度：${animal.rare}</p>
+  `;
+  container.appendChild(div);
+
+  if(results.length===2){
+    showCompatibility();
+  }
+}
+
+function addFriend(){
+  document.getElementById("imageInput").value="";
+}
+
+function showCompatibility(){
+  let percent=Math.floor(Math.random()*41)+60;
+  document.getElementById("compatibility").innerText=
+  "2人の相性は… "+percent+"％ 💕";
+}
+
+function saveScreenshot(){
+  html2canvas(document.querySelector(".card")).then(canvas=>{
+    const link=document.createElement("a");
+    link.download="result.png";
+    link.href=canvas.toDataURL();
+    link.click();
+  });
+}
+
+function shareResult(){
+  if(navigator.share){
+    navigator.share({
+      title:"どうぶつタイプ診断",
+      text:"診断してみたよ！",
+      url:location.href
     });
-
-    document.getElementById("animalForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-
-      const file = imageInput.files[0];
-      if (!file) {
-        alert("画像を選んでください");
-        return;
-      }
-
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("result").classList.remove("show");
-      document.getElementById("result").textContent = "";
-
-      const fileName = Date.now() + "_" + file.name;
-
-      const { error } = await client.storage
-        .from("images")
-        .upload(fileName, file);
-
-      if (error) {
-        alert("アップロード失敗");
-        document.getElementById("loading").style.display = "none";
-        return;
-      }
-
-      setTimeout(() => {
-        const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
-
-        const result = document.getElementById("result");
-        result.innerHTML = `
-          あなたは… ${randomAnimal.name} タイプ！ 💕<br>
-          <span style="font-size:14px;font-weight:normal;">
-            ${randomAnimal.comment}
-          </span>
-        `;
-
-        document.getElementById("loading").style.display = "none";
-        result.classList.add("show");
-      }, 1500);
-    });
-  </script>
+  }else{
+    alert("この端末ではシェア非対応です");
+  }
+}
+</script>
 
 </body>
 </html>
