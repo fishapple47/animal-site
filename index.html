@@ -26,6 +26,7 @@
       text-align: center;
       width: 100%;
       max-width: 380px;
+      position: relative;
     }
 
     h1 {
@@ -61,14 +62,38 @@
       transform: scale(1.05);
     }
 
+    #preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 10px auto;
+      display: none;
+      border: 3px solid #ffb3d9;
+    }
+
+    #loading {
+      display: none;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #888;
+    }
+
     #result {
       margin-top: 20px;
       font-size: 18px;
       font-weight: bold;
       color: #444;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.5s;
     }
 
-    /* めちゃくちゃ小さい利用規約 */
+    #result.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .tiny-terms {
       font-size: 6px;
       color: #ccc;
@@ -81,15 +106,6 @@
       font-size: 12px;
       color: #555;
     }
-
-    @media (max-width: 400px) {
-      h1 {
-        font-size: 18px;
-      }
-      .description {
-        font-size: 13px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -99,6 +115,8 @@
     <div class="description">
       顔写真を選んで「診断する」を押してね！✨
     </div>
+
+    <img id="preview">
 
     <form id="animalForm">
       <input type="file" id="imageInput" accept="image/*" required>
@@ -113,6 +131,7 @@
       <button type="submit">診断する ✨</button>
     </form>
 
+    <div id="loading">診断中…🐾✨</div>
     <h2 id="result"></h2>
 
     <a href="terms.html" target="_blank" class="tiny-terms">
@@ -127,24 +146,39 @@
     );
 
     const animals = [
-      "ライオン 🦁",
-      "ねこ 🐱",
-      "いぬ 🐶",
-      "パンダ 🐼",
-      "うさぎ 🐰",
-      "きつね 🦊",
-      "ハリネズミ 🦔",
-      "コアラ 🐨"
+      { name: "ライオン 🦁", comment: "カリスマ性があってリーダータイプ！" },
+      { name: "ねこ 🐱", comment: "マイペースで愛され上手♡" },
+      { name: "いぬ 🐶", comment: "素直でみんなの癒し存在！" },
+      { name: "パンダ 🐼", comment: "ゆるかわで周りを和ませる天才！" },
+      { name: "うさぎ 🐰", comment: "やさしくて守りたくなる魅力！" },
+      { name: "きつね 🦊", comment: "ちょっとミステリアスで賢い！" },
+      { name: "ハリネズミ 🦔", comment: "ツンデレだけど実は優しい♡" },
+      { name: "コアラ 🐨", comment: "穏やかで安心感バツグン！" }
     ];
+
+    const preview = document.getElementById("preview");
+    const imageInput = document.getElementById("imageInput");
+
+    imageInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
 
     document.getElementById("animalForm").addEventListener("submit", async function(e) {
       e.preventDefault();
 
-      const file = document.getElementById("imageInput").files[0];
+      const file = imageInput.files[0];
       if (!file) {
         alert("画像を選んでください");
         return;
       }
+
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("result").classList.remove("show");
+      document.getElementById("result").textContent = "";
 
       const fileName = Date.now() + "_" + file.name;
 
@@ -154,13 +188,24 @@
 
       if (error) {
         alert("アップロード失敗");
+        document.getElementById("loading").style.display = "none";
         return;
       }
 
-      const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+      setTimeout(() => {
+        const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
 
-      document.getElementById("result").textContent =
-        "あなたは… " + randomAnimal + " タイプです！ 💕";
+        const result = document.getElementById("result");
+        result.innerHTML = `
+          あなたは… ${randomAnimal.name} タイプ！ 💕<br>
+          <span style="font-size:14px;font-weight:normal;">
+            ${randomAnimal.comment}
+          </span>
+        `;
+
+        document.getElementById("loading").style.display = "none";
+        result.classList.add("show");
+      }, 1500);
     });
   </script>
 
