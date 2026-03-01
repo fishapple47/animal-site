@@ -26,6 +26,12 @@ body {
   width:100%;
   max-width:380px;
 }
+h1 { font-size:20px; margin-bottom:10px; }
+.description {
+  font-size:14px;
+  color:#666;
+  margin-bottom:20px;
+}
 button {
   background:#ff80bf;
   border:none;
@@ -35,6 +41,11 @@ button {
   font-size:16px;
   cursor:pointer;
   width:100%;
+  transition:0.3s;
+}
+button:hover {
+  background:#ff4da6;
+  transform:scale(1.05);
 }
 #preview {
   width:100px;
@@ -43,12 +54,32 @@ button {
   object-fit:cover;
   margin:10px auto;
   display:none;
+  border:3px solid #ffb3d9;
+}
+#loading {
+  display:none;
+  margin-top:15px;
+  font-size:14px;
+  color:#888;
 }
 .resultCard {
   margin-top:20px;
   padding:20px;
   border-radius:20px;
   background:#fff0f8;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+.rare {
+  font-size:13px;
+  color:#ff4da6;
+  margin-top:5px;
+}
+.tiny-terms {
+  font-size:6px;
+  color:#ccc;
+  margin-top:8px;
+  display:block;
+  text-decoration:none;
 }
 </style>
 </head>
@@ -56,21 +87,36 @@ button {
 
 <div class="card">
 <h1>あなたはどのどうぶつ？ 🐶</h1>
-<p>顔写真を選んで「診断する」を押してね！✨</p>
+<div class="description">
+顔写真を選んで「診断する」を押してね！✨
+</div>
 
 <img id="preview">
 
 <form id="animalForm">
 <input type="file" id="imageInput" accept="image/*" required>
+
+<p>
+<label>
+<input type="checkbox" required>
+利用規約に同意する
+</label>
+</p>
+
 <button type="submit">診断する ✨</button>
 </form>
 
+<div id="loading">診断中…🐾✨</div>
 <div id="result"></div>
+
+<a href="terms.html" target="_blank" class="tiny-terms">
+利用規約はこちら
+</a>
 </div>
 
 <script>
 
-// ✅ あなたのSupabase情報（過去のものを挿入済み）
+// ✅ あなたのSupabase
 const supabase = window.supabase.createClient(
   "https://kuxeqdsvpzdtssejkasy.supabase.co",
   "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
@@ -98,46 +144,42 @@ imageInput.addEventListener("change", function() {
   }
 });
 
-// 🔥 画像ハッシュ生成（同じ画像＝同じ結果）
-async function getImageHash(file){
-  const buffer = await file.arrayBuffer();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.reduce((sum, byte) => sum + byte, 0);
-}
-
 document.getElementById("animalForm").addEventListener("submit", async function(e){
 e.preventDefault();
 
 const file = imageInput.files[0];
 if(!file){ alert("画像を選んでね"); return; }
 
-// 🔥 ハッシュ取得
-const hashValue = await getImageHash(file);
-const index = hashValue % animals.length;
-const selectedAnimal = animals[index];
+document.getElementById("loading").style.display="block";
+document.getElementById("result").innerHTML="";
 
-// 🔥 同じ画像は同じファイル名
-const fileName = hashValue + "_" + file.name;
+// 🔥 ファイル名（重複防止）
+const fileName = Date.now() + "_" + file.name;
 
-// 🔥 Storageへ保存
+// 🔥 Storage保存
 const { error: uploadError } = await supabase
   .storage
   .from("images")
-  .upload(fileName, file, { upsert: true });
+  .upload(fileName, file);
 
 if(uploadError){
   alert("アップロード失敗：" + uploadError.message);
+  document.getElementById("loading").style.display="none";
   return;
 }
 
-// 🔥 結果表示
+// 🔥 ランダム診断（元の仕様）
+const randomAnimal = animals[Math.floor(Math.random()*animals.length)];
+
+setTimeout(()=>{
 document.getElementById("result").innerHTML=`
 <div class="resultCard">
-<h3>${selectedAnimal.name}</h3>
-<p>レア度：${selectedAnimal.rare}</p>
+<h3>${randomAnimal.name}</h3>
+<div class="rare">レア度：${randomAnimal.rare}</div>
 </div>
 `;
+document.getElementById("loading").style.display="none";
+},1000);
 
 });
 </script>
