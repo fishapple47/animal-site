@@ -1,188 +1,213 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>どうぶつタイプ診断 🐾</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>どうぶつタイプ診断 🐾</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-body {
-  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
-  background:linear-gradient(135deg,#ffe6f0,#e6f7ff);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
-  margin:0;
-  padding:20px;
-}
-.card {
-  background:white;
-  padding:30px 25px;
-  border-radius:25px;
-  box-shadow:0 15px 40px rgba(0,0,0,0.1);
-  text-align:center;
-  width:100%;
-  max-width:380px;
-}
-h1 { font-size:20px; margin-bottom:10px; }
-.description {
-  font-size:14px;
-  color:#666;
-  margin-bottom:20px;
-}
-button {
-  background:#ff80bf;
-  border:none;
-  padding:12px;
-  border-radius:50px;
-  color:white;
-  font-size:16px;
-  cursor:pointer;
-  width:100%;
-  transition:0.3s;
-}
-button:hover {
-  background:#ff4da6;
-  transform:scale(1.05);
-}
-#preview {
-  width:100px;
-  height:100px;
-  border-radius:50%;
-  object-fit:cover;
-  margin:10px auto;
-  display:none;
-  border:3px solid #ffb3d9;
-}
-#loading {
-  display:none;
-  margin-top:15px;
-  font-size:14px;
-  color:#888;
-}
-.resultCard {
-  margin-top:20px;
-  padding:20px;
-  border-radius:20px;
-  background:#fff0f8;
-  box-shadow:0 10px 25px rgba(0,0,0,0.08);
-}
-.rare {
-  font-size:13px;
-  color:#ff4da6;
-  margin-top:5px;
-}
-.tiny-terms {
-  font-size:6px;
-  color:#ccc;
-  margin-top:8px;
-  display:block;
-  text-decoration:none;
-}
-</style>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: linear-gradient(135deg, #ffe6f0, #e6f7ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 30px 25px;
+      border-radius: 25px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background: #ff80bf;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #ff4da6;
+      transform: scale(1.05);
+    }
+
+    #preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 10px auto;
+      display: none;
+      border: 3px solid #ffb3d9;
+    }
+
+    #loading {
+      display: none;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #444;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.5s;
+    }
+
+    #result.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tiny-terms {
+      font-size: 6px;
+      color: #ccc;
+      margin-top: 8px;
+      display: block;
+      text-decoration: none;
+    }
+
+    label {
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
 
-<div class="card">
-<h1>あなたはどのどうぶつ？ 🐶</h1>
-<div class="description">
-顔写真を選んで「診断する」を押してね！✨
-</div>
+  <div class="card">
+    <h1>あなたはどのどうぶつ？ 🐶</h1>
+    <div class="description">
+      顔写真を選んで「診断する」を押してね！✨
+    </div>
 
-<img id="preview">
+    <img id="preview">
 
-<form id="animalForm">
-<input type="file" id="imageInput" accept="image/*" required>
+    <form id="animalForm">
+      <input type="file" id="imageInput" accept="image/*" required>
 
-<p>
-<label>
-<input type="checkbox" required>
-利用規約に同意する
-</label>
-</p>
+      <p>
+        <label>
+          <input type="checkbox" required>
+          利用規約に同意する
+        </label>
+      </p>
 
-<button type="submit">診断する ✨</button>
-</form>
+      <button type="submit">診断する ✨</button>
+    </form>
 
-<div id="loading">診断中…🐾✨</div>
-<div id="result"></div>
+    <div id="loading">診断中…🐾✨</div>
+    <h2 id="result"></h2>
 
-<a href="terms.html" target="_blank" class="tiny-terms">
-利用規約はこちら
-</a>
-</div>
+    <a href="terms.html" target="_blank" class="tiny-terms">
+      利用規約はこちら
+    </a>
+  </div>
 
-<script>
+  <script>
+    const client = window.supabase.createClient(
+      "https://kuxeqdsvpzdtssejkasy.supabase.co",
+      "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
+    );
 
-// ✅ あなたのSupabase
-const supabase = window.supabase.createClient(
-  "https://kuxeqdsvpzdtssejkasy.supabase.co",
-  "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
-);
+    const animals = [
+      { name: "ライオン 🦁", comment: "カリスマ性があってリーダータイプ！" },
+      { name: "ねこ 🐱", comment: "マイペースで愛され上手♡" },
+      { name: "いぬ 🐶", comment: "素直でみんなの癒し存在！" },
+      { name: "パンダ 🐼", comment: "ゆるかわで周りを和ませる天才！" },
+      { name: "うさぎ 🐰", comment: "やさしくて守りたくなる魅力！" },
+      { name: "きつね 🦊", comment: "ちょっとミステリアスで賢い！" },
+      { name: "ハリネズミ 🦔", comment: "ツンデレだけど実は優しい♡" },
+      { name: "コアラ 🐨", comment: "穏やかで安心感バツグン！" }
+    ];
 
-const animals = [
-{name:"ライオン 🦁", rare:"★★★★★ 超レア！"},
-{name:"ねこ 🐱", rare:"★★★ ふつう"},
-{name:"いぬ 🐶", rare:"★★★ 人気タイプ"},
-{name:"パンダ 🐼", rare:"★★★★ レア"},
-{name:"うさぎ 🐰", rare:"★★ ちょいレア"},
-{name:"きつね 🦊", rare:"★★★★ レア"},
-{name:"ハリネズミ 🦔", rare:"★★ ちょいレア"},
-{name:"コアラ 🐨", rare:"★★★ 癒し枠"}
-];
+    const preview = document.getElementById("preview");
+    const imageInput = document.getElementById("imageInput");
 
-const preview = document.getElementById("preview");
-const imageInput = document.getElementById("imageInput");
+    imageInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
 
-imageInput.addEventListener("change", function() {
-  const file = this.files[0];
-  if (file) {
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = "block";
-  }
-});
+    document.getElementById("animalForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
 
-document.getElementById("animalForm").addEventListener("submit", async function(e){
-e.preventDefault();
+      const file = imageInput.files[0];
+      if (!file) {
+        alert("画像を選んでください");
+        return;
+      }
 
-const file = imageInput.files[0];
-if(!file){ alert("画像を選んでね"); return; }
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("result").classList.remove("show");
+      document.getElementById("result").textContent = "";
 
-document.getElementById("loading").style.display="block";
-document.getElementById("result").innerHTML="";
+      const fileName = Date.now() + "_" + file.name;
 
-// 🔥 ファイル名（重複防止）
-const fileName = Date.now() + "_" + file.name;
+      const { error } = await client.storage
+        .from("images")
+        .upload(fileName, file);
 
-// 🔥 Storage保存
-const { error: uploadError } = await supabase
-  .storage
-  .from("images")
-  .upload(fileName, file);
+      if (error) {
+        alert("アップロード失敗");
+        document.getElementById("loading").style.display = "none";
+        return;
+      }
 
-if(uploadError){
-  alert("アップロード失敗：" + uploadError.message);
-  document.getElementById("loading").style.display="none";
-  return;
-}
+      setTimeout(() => {
+        const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
 
-// 🔥 ランダム診断（元の仕様）
-const randomAnimal = animals[Math.floor(Math.random()*animals.length)];
+        const result = document.getElementById("result");
+        result.innerHTML = `
+          あなたは… ${randomAnimal.name} タイプ！ 💕<br>
+          <span style="font-size:14px;font-weight:normal;">
+            ${randomAnimal.comment}
+          </span>
+        `;
 
-setTimeout(()=>{
-document.getElementById("result").innerHTML=`
-<div class="resultCard">
-<h3>${randomAnimal.name}</h3>
-<div class="rare">レア度：${randomAnimal.rare}</div>
-</div>
-`;
-document.getElementById("loading").style.display="none";
-},1000);
-
-});
-</script>
+        document.getElementById("loading").style.display = "none";
+        result.classList.add("show");
+      }, 1500);
+    });
+  </script>
 
 </body>
 </html>
