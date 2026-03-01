@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>どうぶつタイプ診断 🐾</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
@@ -165,7 +164,15 @@ imageInput.addEventListener("change", function() {
   }
 });
 
-document.getElementById("animalForm").addEventListener("submit", function(e){
+// 🔥 ここが追加ポイント（画像からハッシュ生成）
+async function getImageHash(file){
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.reduce((sum, byte) => sum + byte, 0);
+}
+
+document.getElementById("animalForm").addEventListener("submit", async function(e){
 e.preventDefault();
 
 const file = imageInput.files[0];
@@ -174,20 +181,26 @@ if(!file){ alert("画像を選んでね"); return; }
 document.getElementById("loading").style.display="block";
 document.getElementById("result").innerHTML="";
 
-setTimeout(()=>{
-const randomAnimal = animals[Math.floor(Math.random()*animals.length)];
+// 🔥 ハッシュ生成
+const hashValue = await getImageHash(file);
 
+// 🔥 ハッシュから動物決定
+const index = hashValue % animals.length;
+const selectedAnimal = animals[index];
+
+setTimeout(()=>{
 const resultDiv = document.getElementById("result");
 resultDiv.innerHTML=`
 <div class="resultCard show">
-<div class="animalIcon">${randomAnimal.name.split(" ")[1]}</div>
-<h3>${randomAnimal.name}</h3>
-<div class="rare">レア度：${randomAnimal.rare}</div>
+<div class="animalIcon">${selectedAnimal.name.split(" ")[1]}</div>
+<h3>${selectedAnimal.name}</h3>
+<div class="rare">レア度：${selectedAnimal.rare}</div>
 </div>
 `;
 
 document.getElementById("loading").style.display="none";
-},1500);
+},1000);
+
 });
 </script>
 
