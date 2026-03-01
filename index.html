@@ -5,14 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>どうぶつタイプ診断 🐾</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
-body{
+body {
   font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
-  background:linear-gradient(135deg,#fce3ff,#e0f7ff,#fff0f6);
-  background-size:200% 200%;
-  animation:bgMove 10s ease infinite;
+  background:linear-gradient(135deg,#ffe6f0,#e6f7ff);
   display:flex;
   justify-content:center;
   align-items:center;
@@ -20,164 +17,178 @@ body{
   margin:0;
   padding:20px;
 }
-@keyframes bgMove{
-  0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
-}
-.card{
+
+.card {
   background:white;
-  padding:25px;
+  padding:30px 25px;
   border-radius:25px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.1);
-  width:100%;
-  max-width:900px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.1);
   text-align:center;
+  width:100%;
+  max-width:380px;
 }
-.results{
-  display:flex;
-  gap:20px;
-  justify-content:center;
-  flex-wrap:wrap;
+
+h1 { font-size:20px; margin-bottom:10px; }
+
+.description {
+  font-size:14px;
+  color:#666;
+  margin-bottom:20px;
 }
-.resultCard{
-  flex:1;
-  min-width:250px;
-  background:#fff;
-  border-radius:20px;
-  padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+
+input[type="file"] {
+  width:100%;
+  margin-bottom:15px;
 }
-.animalImg{
-  font-size:50px;
-}
-button{
-  background:#ff7ecb;
+
+button {
+  background:#ff80bf;
   border:none;
-  padding:10px 20px;
-  border-radius:30px;
+  padding:12px;
+  border-radius:50px;
   color:white;
+  font-size:16px;
   cursor:pointer;
-  margin-top:10px;
+  width:100%;
+  transition:0.3s;
 }
-#compatibility{
-  font-size:22px;
+
+button:hover {
+  background:#ff4da6;
+  transform:scale(1.05);
+}
+
+#preview {
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  object-fit:cover;
+  margin:10px auto;
+  display:none;
+  border:3px solid #ffb3d9;
+}
+
+#loading {
+  display:none;
+  margin-top:15px;
+  font-size:14px;
+  color:#888;
+}
+
+.resultCard {
   margin-top:20px;
-  font-weight:bold;
+  padding:20px;
+  border-radius:20px;
+  background:#fff0f8;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  opacity:0;
+  transform:translateY(10px);
+  transition:0.5s;
 }
-.tiny-terms{
+
+.resultCard.show {
+  opacity:1;
+  transform:translateY(0);
+}
+
+.animalIcon {
+  font-size:40px;
+}
+
+.rare {
+  font-size:13px;
+  color:#ff4da6;
+  margin-top:5px;
+}
+
+.tiny-terms {
   font-size:6px;
   color:#ccc;
+  margin-top:8px;
+  display:block;
+  text-decoration:none;
 }
 </style>
 </head>
 <body>
 
 <div class="card">
-<h2>どうぶつタイプ診断 🐶</h2>
-<p>顔写真を選んで「診断する」を押してね✨</p>
+<h1>あなたはどのどうぶつ？ 🐶</h1>
+<div class="description">
+顔写真を選んで「診断する」を押してね！✨
+</div>
 
-<input type="file" id="imageInput" accept="image/*">
-<button onclick="diagnose()">診断する</button>
-<button onclick="addFriend()">もう1人診断する</button>
+<img id="preview">
 
-<div id="loading"></div>
+<form id="animalForm">
+<input type="file" id="imageInput" accept="image/*" required>
 
-<div class="results" id="results"></div>
-<div id="compatibility"></div>
+<p>
+<label>
+<input type="checkbox" required>
+利用規約に同意する
+</label>
+</p>
 
-<button onclick="saveScreenshot()">結果を保存📸</button>
-<button onclick="shareResult()">シェア📤</button>
+<button type="submit">診断する ✨</button>
+</form>
 
-<br><a href="terms.html" target="_blank" class="tiny-terms">利用規約はこちら</a>
+<div id="loading">診断中…🐾✨</div>
+
+<div id="result"></div>
+
+<a href="terms.html" target="_blank" class="tiny-terms">
+利用規約はこちら
+</a>
 </div>
 
 <script>
-const animals=[
-{name:"ライオン 🦁",rare:"★★★★★",emoji:"🦁"},
-{name:"ねこ 🐱",rare:"★★★",emoji:"🐱"},
-{name:"いぬ 🐶",rare:"★★★",emoji:"🐶"},
-{name:"パンダ 🐼",rare:"★★★★",emoji:"🐼"},
-{name:"うさぎ 🐰",rare:"★★",emoji:"🐰"},
-{name:"きつね 🦊",rare:"★★★★",emoji:"🦊"},
-{name:"ハリネズミ 🦔",rare:"★★",emoji:"🦔"},
-{name:"コアラ 🐨",rare:"★★★",emoji:"🐨"}
+const animals = [
+{name:"ライオン 🦁", rare:"★★★★★ 超レア！"},
+{name:"ねこ 🐱", rare:"★★★ ふつう"},
+{name:"いぬ 🐶", rare:"★★★ 人気タイプ"},
+{name:"パンダ 🐼", rare:"★★★★ レア"},
+{name:"うさぎ 🐰", rare:"★★ ちょいレア"},
+{name:"きつね 🦊", rare:"★★★★ レア"},
+{name:"ハリネズミ 🦔", rare:"★★ ちょいレア"},
+{name:"コアラ 🐨", rare:"★★★ 癒し枠"}
 ];
 
-let results=[];
+const preview = document.getElementById("preview");
+const imageInput = document.getElementById("imageInput");
 
-function hashCode(str){
-  let hash=0;
-  for(let i=0;i<str.length;i++){
-    hash=str.charCodeAt(i)+((hash<<5)-hash);
+imageInput.addEventListener("change", function() {
+  const file = this.files[0];
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
   }
-  return Math.abs(hash);
-}
+});
 
-function diagnose(){
-  const file=document.getElementById("imageInput").files[0];
-  if(!file){alert("画像を選んでね");return;}
+document.getElementById("animalForm").addEventListener("submit", function(e){
+e.preventDefault();
 
-  document.getElementById("loading").innerText="診断中…🐾";
+const file = imageInput.files[0];
+if(!file){ alert("画像を選んでね"); return; }
 
-  let key=file.name+file.size;
-  let index=hashCode(key)%animals.length;
-  let animal=animals[index];
+document.getElementById("loading").style.display="block";
+document.getElementById("result").innerHTML="";
 
-  setTimeout(()=>{
-    document.getElementById("loading").innerText="";
-    addResult(animal);
-  },1500);
-}
+setTimeout(()=>{
+const randomAnimal = animals[Math.floor(Math.random()*animals.length)];
 
-function addResult(animal){
-  results.push(animal);
-  const container=document.getElementById("results");
+const resultDiv = document.getElementById("result");
+resultDiv.innerHTML=`
+<div class="resultCard show">
+<div class="animalIcon">${randomAnimal.name.split(" ")[1]}</div>
+<h3>${randomAnimal.name}</h3>
+<div class="rare">レア度：${randomAnimal.rare}</div>
+</div>
+`;
 
-  const div=document.createElement("div");
-  div.className="resultCard";
-  div.innerHTML=`
-    <div class="animalImg">${animal.emoji}</div>
-    <h3>${animal.name}</h3>
-    <p>レア度：${animal.rare}</p>
-  `;
-  container.appendChild(div);
-
-  if(results.length===2){
-    showCompatibility();
-  }
-}
-
-function addFriend(){
-  document.getElementById("imageInput").value="";
-}
-
-function showCompatibility(){
-  let percent=Math.floor(Math.random()*41)+60;
-  document.getElementById("compatibility").innerText=
-  "2人の相性は… "+percent+"％ 💕";
-}
-
-function saveScreenshot(){
-  html2canvas(document.querySelector(".card")).then(canvas=>{
-    const link=document.createElement("a");
-    link.download="result.png";
-    link.href=canvas.toDataURL();
-    link.click();
-  });
-}
-
-function shareResult(){
-  if(navigator.share){
-    navigator.share({
-      title:"どうぶつタイプ診断",
-      text:"診断してみたよ！",
-      url:location.href
-    });
-  }else{
-    alert("この端末ではシェア非対応です");
-  }
-}
+document.getElementById("loading").style.display="none";
+},1500);
+});
 </script>
 
 </body>
