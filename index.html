@@ -2,35 +2,99 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>動物タイプ診断</title>
+  <title>どうぶつタイプ診断 🐾</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      background: linear-gradient(135deg, #ffe6f0, #e6f7ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 15px;
+    }
+
+    button {
+      background: #ff80bf;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #ff4da6;
+      transform: scale(1.05);
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    a {
+      font-size: 12px;
+      color: #888;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    label {
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>あなたはどの動物タイプ？</h1>
+  <div class="card">
+    <h1>あなたはどのどうぶつ？ 🐶</h1>
 
-  <form id="animalForm">
-    <p>
+    <form id="animalForm">
       <input type="file" id="imageInput" accept="image/*" required>
-    </p>
 
-    <p>
-      <a href="terms.html" target="_blank">利用規約はこちら</a>
-    </p>
+      <p>
+        <a href="terms.html" target="_blank">利用規約はこちら</a>
+      </p>
 
-    <p>
-      <label>
-        <input type="checkbox" required>
-        利用規約に同意
-      </label>
-    </p>
+      <p>
+        <label>
+          <input type="checkbox" required>
+          利用規約に同意する
+        </label>
+      </p>
 
-    <p>
-      <button type="submit">診断する</button>
-    </p>
-  </form>
+      <button type="submit">診断する ✨</button>
+    </form>
 
-  <h2 id="result"></h2>
+    <h2 id="result"></h2>
+  </div>
 
   <script>
     const client = window.supabase.createClient(
@@ -65,7 +129,6 @@
         .upload(fileName, file);
 
       if (error) {
-        console.log(error);
         alert("アップロード失敗");
         return;
       }
@@ -73,7 +136,7 @@
       const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
 
       document.getElementById("result").textContent =
-        "あなたは… " + randomAnimal + " タイプです！";
+        "あなたは… " + randomAnimal + " タイプです！ 💕";
     });
   </script>
 
