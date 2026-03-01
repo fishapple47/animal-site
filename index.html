@@ -1,213 +1,234 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>どうぶつタイプ診断 🐾</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>どうぶつタイプ診断 🐾</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background: linear-gradient(135deg, #ffe6f0, #e6f7ff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-    }
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: linear-gradient(135deg, #ffe6f0, #e6f7ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
 
-    .card {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 25px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 100%;
-      max-width: 380px;
-      position: relative;
-    }
+.card {
+  background: white;
+  padding: 30px 25px;
+  border-radius: 25px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+}
 
-    h1 {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
+h1 { font-size: 20px; margin-bottom: 10px; }
 
-    .description {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 20px;
-    }
+.description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
 
-    input[type="file"] {
-      width: 100%;
-      margin-bottom: 15px;
-    }
+input[type="file"] {
+  width: 100%;
+  margin-bottom: 15px;
+}
 
-    button {
-      background: #ff80bf;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 50px;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-      width: 100%;
-    }
+button {
+  background: #ff80bf;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 50px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+  width: 100%;
+}
 
-    button:hover {
-      background: #ff4da6;
-      transform: scale(1.05);
-    }
+button:hover {
+  background: #ff4da6;
+  transform: scale(1.05);
+}
 
-    #preview {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin: 10px auto;
-      display: none;
-      border: 3px solid #ffb3d9;
-    }
+#preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 10px auto;
+  display: none;
+  border: 3px solid #ffb3d9;
+}
 
-    #loading {
-      display: none;
-      margin-top: 15px;
-      font-size: 14px;
-      color: #888;
-    }
+#loading {
+  display: none;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #888;
+}
 
-    #result {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #444;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: 0.5s;
-    }
+/* 🔥 結果カード */
+.resultCard {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 20px;
+  background: #fff0f8;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: 0.5s;
+}
 
-    #result.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
+.resultCard.show {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-    .tiny-terms {
-      font-size: 6px;
-      color: #ccc;
-      margin-top: 8px;
-      display: block;
-      text-decoration: none;
-    }
+.animalIcon {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
 
-    label {
-      font-size: 12px;
-      color: #555;
-    }
-  </style>
+.comment {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #555;
+}
+
+.tiny-terms {
+  font-size: 6px;
+  color: #ccc;
+  margin-top: 8px;
+  display: block;
+  text-decoration: none;
+}
+
+label {
+  font-size: 12px;
+  color: #555;
+}
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <h1>あなたはどのどうぶつ？ 🐶</h1>
-    <div class="description">
-      顔写真を選んで「診断する」を押してね！✨
-    </div>
-
-    <img id="preview">
-
-    <form id="animalForm">
-      <input type="file" id="imageInput" accept="image/*" required>
-
-      <p>
-        <label>
-          <input type="checkbox" required>
-          利用規約に同意する
-        </label>
-      </p>
-
-      <button type="submit">診断する ✨</button>
-    </form>
-
-    <div id="loading">診断中…🐾✨</div>
-    <h2 id="result"></h2>
-
-    <a href="terms.html" target="_blank" class="tiny-terms">
-      利用規約はこちら
-    </a>
+<div class="card">
+  <h1>あなたはどのどうぶつ？ 🐶</h1>
+  <div class="description">
+    顔写真を選んで「診断する」を押してね！✨
   </div>
 
-  <script>
-    const client = window.supabase.createClient(
-      "https://kuxeqdsvpzdtssejkasy.supabase.co",
-      "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
-    );
+  <img id="preview">
 
-    const animals = [
-      { name: "ライオン 🦁", comment: "カリスマ性があってリーダータイプ！" },
-      { name: "ねこ 🐱", comment: "マイペースで愛され上手♡" },
-      { name: "いぬ 🐶", comment: "素直でみんなの癒し存在！" },
-      { name: "パンダ 🐼", comment: "ゆるかわで周りを和ませる天才！" },
-      { name: "うさぎ 🐰", comment: "やさしくて守りたくなる魅力！" },
-      { name: "きつね 🦊", comment: "ちょっとミステリアスで賢い！" },
-      { name: "ハリネズミ 🦔", comment: "ツンデレだけど実は優しい♡" },
-      { name: "コアラ 🐨", comment: "穏やかで安心感バツグン！" }
-    ];
+  <form id="animalForm">
+    <input type="file" id="imageInput" accept="image/*" required>
 
-    const preview = document.getElementById("preview");
-    const imageInput = document.getElementById("imageInput");
+    <p>
+      <label>
+        <input type="checkbox" required>
+        利用規約に同意する
+      </label>
+    </p>
 
-    imageInput.addEventListener("change", function() {
-      const file = this.files[0];
-      if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
-      }
-    });
+    <button type="submit">診断する ✨</button>
+  </form>
 
-    document.getElementById("animalForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+  <div id="loading">診断中…🐾✨</div>
+  <div id="result"></div>
 
-      const file = imageInput.files[0];
-      if (!file) {
-        alert("画像を選んでください");
-        return;
-      }
+  <a href="terms.html" target="_blank" class="tiny-terms">
+    利用規約はこちら
+  </a>
+</div>
 
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("result").classList.remove("show");
-      document.getElementById("result").textContent = "";
+<script>
+const client = window.supabase.createClient(
+  "https://kuxeqdsvpzdtssejkasy.supabase.co",
+  "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
+);
 
-      const fileName = Date.now() + "_" + file.name;
+const animals = [
+  { name: "ライオン 🦁", comment: "カリスマ性があってリーダータイプ！" },
+  { name: "ねこ 🐱", comment: "マイペースで愛され上手♡" },
+  { name: "いぬ 🐶", comment: "素直でみんなの癒し存在！" },
+  { name: "パンダ 🐼", comment: "ゆるかわで周りを和ませる天才！" },
+  { name: "うさぎ 🐰", comment: "やさしくて守りたくなる魅力！" },
+  { name: "きつね 🦊", comment: "ちょっとミステリアスで賢い！" },
+  { name: "ハリネズミ 🦔", comment: "ツンデレだけど実は優しい♡" },
+  { name: "コアラ 🐨", comment: "穏やかで安心感バツグン！" }
+];
 
-      const { error } = await client.storage
-        .from("images")
-        .upload(fileName, file);
+const preview = document.getElementById("preview");
+const imageInput = document.getElementById("imageInput");
 
-      if (error) {
-        alert("アップロード失敗");
-        document.getElementById("loading").style.display = "none";
-        return;
-      }
+imageInput.addEventListener("change", function() {
+  const file = this.files[0];
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  }
+});
 
-      setTimeout(() => {
-        const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+// 🔥 同じ画像＝同じ結果にするハッシュ関数
+async function getImageHash(file) {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.reduce((sum, byte) => sum + byte, 0);
+}
 
-        const result = document.getElementById("result");
-        result.innerHTML = `
-          あなたは… ${randomAnimal.name} タイプ！ 💕<br>
-          <span style="font-size:14px;font-weight:normal;">
-            ${randomAnimal.comment}
-          </span>
-        `;
+document.getElementById("animalForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
 
-        document.getElementById("loading").style.display = "none";
-        result.classList.add("show");
-      }, 1500);
-    });
-  </script>
+  const file = imageInput.files[0];
+  if (!file) {
+    alert("画像を選んでください");
+    return;
+  }
+
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("result").innerHTML = "";
+
+  // 🔥 ハッシュ生成
+  const hashValue = await getImageHash(file);
+  const index = hashValue % animals.length;
+  const selectedAnimal = animals[index];
+
+  // 🔥 Storage保存（同じ画像でもOKにする）
+  const fileName = hashValue + "_" + file.name;
+
+  const { error } = await client.storage
+    .from("images")
+    .upload(fileName, file, { upsert: true });
+
+  if (error) {
+    alert("アップロード失敗");
+    document.getElementById("loading").style.display = "none";
+    return;
+  }
+
+  setTimeout(() => {
+    const resultDiv = document.getElementById("result");
+
+    resultDiv.innerHTML = `
+      <div class="resultCard show">
+        <div class="animalIcon">${selectedAnimal.name.split(" ")[1]}</div>
+        <h2>${selectedAnimal.name}</h2>
+        <div class="comment">${selectedAnimal.comment}</div>
+      </div>
+    `;
+
+    document.getElementById("loading").style.display = "none";
+  }, 1200);
+});
+</script>
 
 </body>
 </html>
