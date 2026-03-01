@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
+body{
   font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
   background:linear-gradient(135deg,#ffe6f0,#e6f7ff);
   display:flex;
@@ -17,7 +17,7 @@ body {
   margin:0;
   padding:20px;
 }
-.card {
+.card{
   background:white;
   padding:30px 25px;
   border-radius:25px;
@@ -25,6 +25,7 @@ body {
   text-align:center;
   width:100%;
   max-width:380px;
+  position:relative;
 }
 button{
   background:#ff80bf;
@@ -34,31 +35,154 @@ button{
   color:white;
   font-size:16px;
   width:100%;
+  cursor:pointer;
+  transition:0.3s;
 }
+button:hover{background:#ff4da6;transform:scale(1.05);}
+
+#preview{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  object-fit:cover;
+  margin:10px auto;
+  display:none;
+  border:3px solid #ffb3d9;
+}
+
+#loading{
+  display:none;
+  margin-top:15px;
+  font-size:14px;
+  color:#888;
+}
+
+.result-card{
+  margin-top:20px;
+  padding:20px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#fff0f5,#f0faff);
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  opacity:0;
+  transform:translateY(15px);
+  transition:0.5s;
+}
+.result-card.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
 .back{
   display:block;
   margin-top:15px;
   font-size:12px;
-  color:#999;
+  color:#aaa;
   text-decoration:none;
 }
+.back:hover{color:#888;}
 </style>
 </head>
 <body>
 
 <div class="card">
-<h1>カメラロールから選択 🐰</h1>
-<p>保存済みの写真を使えます✨</p>
+<h1>カメラロールから診断 🐰</h1>
+<p style="font-size:14px;color:#666;">
+保存済みの写真を使えます✨
+</p>
 
-<form>
-<input type="file" accept="image/*" required>
-<button type="submit">診断する</button>
+<img id="preview">
+
+<form id="animalForm">
+<input type="file" id="imageInput" accept="image/*" required>
+
+<p style="font-size:12px;">
+<label>
+<input type="checkbox" required>
+利用規約に同意する
+</label>
+</p>
+
+<button type="submit">診断する ✨</button>
 </form>
 
+<div id="loading">診断中…🐾✨</div>
+<div id="resultCard" class="result-card"></div>
+
 <a href="index.html" class="back">
-  ← インカメラに戻る
+← インカメラに戻る
 </a>
 
 </div>
+
+<script>
+const client = window.supabase.createClient(
+  "https://kuxeqdsvpzdtssejkasy.supabase.co",
+  "sb_publishable_mySITy6a-TF4f5XWllztsQ_eXyaWHrM"
+);
+
+const animals = [
+  { name:"ライオン 🦁", comment:"カリスマ性があってリーダータイプ！" },
+  { name:"ねこ 🐱", comment:"マイペースで愛され上手♡" },
+  { name:"いぬ 🐶", comment:"素直でみんなの癒し存在！" },
+  { name:"パンダ 🐼", comment:"ゆるかわで周りを和ませる天才！" },
+  { name:"うさぎ 🐰", comment:"やさしくて守りたくなる魅力！" },
+  { name:"きつね 🦊", comment:"ちょっとミステリアスで賢い！" },
+  { name:"ハリネズミ 🦔", comment:"ツンデレだけど実は優しい♡" },
+  { name:"コアラ 🐨", comment:"穏やかで安心感バツグン！" }
+];
+
+const preview=document.getElementById("preview");
+const imageInput=document.getElementById("imageInput");
+const resultCard=document.getElementById("resultCard");
+const loading=document.getElementById("loading");
+
+imageInput.addEventListener("change",function(){
+  const file=this.files[0];
+  if(file){
+    preview.src=URL.createObjectURL(file);
+    preview.style.display="block";
+  }
+});
+
+async function hashFile(file){
+  const buffer=await file.arrayBuffer();
+  const hashBuffer=await crypto.subtle.digest("SHA-256",buffer);
+  const hashArray=Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+document.getElementById("animalForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+
+  const file=imageInput.files[0];
+  if(!file){alert("画像を選んでください");return;}
+
+  loading.style.display="block";
+  resultCard.classList.remove("show");
+  resultCard.innerHTML="";
+
+  const hash=await hashFile(file);
+  const fileName=hash + ".jpg";
+
+  await client.storage
+    .from("images")
+    .upload(fileName,file,{upsert:true});
+
+  const index=parseInt(hash.slice(0,8),16) % animals.length;
+  const result=animals[index];
+
+  setTimeout(()=>{
+    resultCard.innerHTML=`
+      <h2>${result.name} タイプ！ 💕</h2>
+      <p style="font-size:14px;">
+      ${result.comment}
+      </p>
+    `;
+    loading.style.display="none";
+    resultCard.classList.add("show");
+  },1200);
+});
+</script>
+
 </body>
 </html>
