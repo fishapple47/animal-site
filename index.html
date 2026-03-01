@@ -75,7 +75,6 @@ button:hover {
   color: #888;
 }
 
-/* 🔥 結果カード */
 .resultCard {
   margin-top: 20px;
   padding: 20px;
@@ -122,13 +121,19 @@ label {
 <div class="card">
   <h1>あなたはどのどうぶつ？ 🐶</h1>
   <div class="description">
-    顔写真を選んで「診断する」を押してね！✨
+    インカメラで顔写真を撮って「診断する」を押してね！✨
   </div>
 
   <img id="preview">
 
   <form id="animalForm">
-    <input type="file" id="imageInput" accept="image/*" required>
+    <!-- 🔥 インカメ優先 -->
+    <input 
+      type="file" 
+      id="imageInput" 
+      accept="image/*"
+      capture="user"
+      required>
 
     <p>
       <label>
@@ -176,7 +181,7 @@ imageInput.addEventListener("change", function() {
   }
 });
 
-// 🔥 同じ画像＝同じ結果にするハッシュ関数
+// 🔥 同じ画像＝同じ結果
 async function getImageHash(file) {
   const buffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
@@ -196,12 +201,10 @@ document.getElementById("animalForm").addEventListener("submit", async function(
   document.getElementById("loading").style.display = "block";
   document.getElementById("result").innerHTML = "";
 
-  // 🔥 ハッシュ生成
   const hashValue = await getImageHash(file);
   const index = hashValue % animals.length;
   const selectedAnimal = animals[index];
 
-  // 🔥 Storage保存（同じ画像でもOKにする）
   const fileName = hashValue + "_" + file.name;
 
   const { error } = await client.storage
@@ -216,7 +219,6 @@ document.getElementById("animalForm").addEventListener("submit", async function(
 
   setTimeout(() => {
     const resultDiv = document.getElementById("result");
-
     resultDiv.innerHTML = `
       <div class="resultCard show">
         <div class="animalIcon">${selectedAnimal.name.split(" ")[1]}</div>
@@ -224,7 +226,6 @@ document.getElementById("animalForm").addEventListener("submit", async function(
         <div class="comment">${selectedAnimal.comment}</div>
       </div>
     `;
-
     document.getElementById("loading").style.display = "none";
   }, 1200);
 });
